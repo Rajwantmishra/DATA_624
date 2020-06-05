@@ -1,0 +1,121 @@
+---
+title: "Chapter 3 Exercise 3.1"
+author: "Alain Kuiete"
+date: "6/3/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+3.1. The UC Irvine Machine Learning Repository6 contains a data set related
+to glass identification. The data consist of 214 glass samples labeled as one
+of seven class categories. There are nine predictors, including the refractive
+index and percentages of eight elements: Na, Mg, Al, Si, K, Ca, Ba, and Fe.
+The data can be accessed via:
+```{r}
+library(mlbench)
+data(Glass)
+str(Glass)
+```
+
+```{r}
+head(Glass)
+```
+
+
+(a) Using visualizations, explore the predictor variables to understand their
+distributions as well as the relationships between predictors.
+(b) Do there appear to be any outliers in the data? Are any predictors skewed?
+(c) Are there any relevant transformations of one or more predictors that
+might improve the classification model?
+ 
+We remove the target variable
+```{r}
+glass.predictors <- Glass[,-10]
+```
+
+Since all variables are numerical, we can use the skewness function of e1071 to estimated the predictors to represent.
+```{r}
+library(e1071)
+skewValues <- apply(glass.predictors, 2, skewness)
+skewValues
+```
+
+```{r}
+par(mfrow = c(3,3))
+hist(x = glass.predictors$RI)
+hist(x = glass.predictors$Na)
+hist(x = glass.predictors$Mg)
+hist(x = glass.predictors$Al)
+hist(x = glass.predictors$Si)
+hist(x = glass.predictors$K)
+hist(x = glass.predictors$Ca)
+hist(x = glass.predictors$Ba)
+hist(x = glass.predictors$Fe)
+```
+
+The predictors RI, Na, Al, Si and Ca are normal distributed
+The predictors K, Ba, and Fe are rigtht skewed. we can aplied the log function on those variable to normalise or Boxcox to centralise, scale and transform.
+
+The Mg predictor need to be centralise and scale. It is neither normal, nor skewed.
+
+Looking for outliers
+```{r}
+par(mfrow = c(3,3))
+boxplot(x = glass.predictors$RI, main = "RI")
+boxplot(x = glass.predictors$Na, main = "Na")
+boxplot(x = glass.predictors$Mg, main = "Mg")
+boxplot(x = glass.predictors$Al, main = "Al")
+boxplot(x = glass.predictors$Si, main = "Si")
+boxplot(x = glass.predictors$K, main = "K")
+boxplot(x = glass.predictors$Ca, main = "Ca")
+boxplot(x = glass.predictors$Ba, main = "Ba")
+boxplot(x = glass.predictors$Fe, main = "Fe")
+```
+
+```{r}
+summary(glass.predictors)
+```
+
+
+
+To visualize the correlation between predictors, we use the corrplot function in the package of the same name.
+
+```{r}
+correlations <- cor(glass.predictors)
+correlations
+```
+
+```{r}
+library(corrplot)
+corrplot(correlations, order = "hclust")
+```
+
+
+```{r}
+GGally::ggpairs(as.data.frame(glass.predictors))
+```
+
+The only notable correlation is between RI and Ca.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
