@@ -4,6 +4,7 @@ author: "Group 3"
 date: "6/3/2020"
 output:
   word_document: default
+  pdf_document: default
   html_document: default
 ---
 
@@ -167,7 +168,7 @@ head(Soybean)
 ### any of the distributions degenerate in the ways discussed earlier in this
 ### chapter?
 ```{r}
-nearZeroVar(Soybean)
+nearZeroVar(Soybean,saveMetric=TRUE)
 ```
 ####  The predictors that correspond respectively to the position of variables  19, 26, 28 in the datafarme Soybean  which are degenerate, are leaf.mild, mycelium and sclerotia.
 
@@ -229,7 +230,7 @@ The aggr function in the VIM package plots and calculates the amount of missing 
 aggr(Soybean, prop = c(TRUE, TRUE), bars=TRUE, numbers=TRUE, sortVars=TRUE)
 ```
 The table above and the histograms show that the predictors hail, sever, seed.tmt, and lodging have around 18% of missing data. Other variables that are more likely to be missing are germ(16% of missing values), leaf.mild(16%),fruiting.bodies(15%), fruits.spots(15%), seed.discolor(15%), and shriveling(15%).
-The grid shows the combination of all with 82% of data not missing in accordance with the problem description (18% missing). The remainder of the grid shows missing data for variable combinations with each row highlighting the missing values for the group of variables detailed in the x-axis. The non-graphical output of the function shows the exact proportion of missing values per variable.
+The grid shows the combination of all with 82% of data not missing in accordance with the problem description (18% missing). The remainder of the grid shows missing data for variable combinations with each row highlighting the missing values for the group of variables detailed in the x-axis. The non-graphical output of the function shows on top the exact proportion of missing values per variable.
 
 
 ### Looking for pattern in missing data by classes
@@ -243,17 +244,16 @@ Soybean %>%
   unique()
 ```
 
-Interpretation
 Checking if a pattern of missing data related to the classes exists is done by checking if some classes hold most of the incomplete cases. This is accomplished by filtering, grouping, and mutating the data with dplyr. The majority of the missing values are in the phytophthora-rot class which has nearly 10% incomplete cases. The are only four more, out of the eighteen other, variables with incomplete cases. The pattern of missing data is related to the classes. Mostly the phytophthora-rot class however since the other four variables only have between 1% and 2% incomplete cases.
 
 
 
-(c) Develop a strategy for handling missing data, either by eliminating
-predictors or imputation.
+### (c) Develop a strategy for handling missing data, either by eliminating
+### predictors or imputation.
 
 The strategy to handle missing data is by using the predictive mean matching method of the mice function to imput data.
 Next, we create a complete dataset with the function complete()
-We can previous the new dataset fro missing values with aggr from VIM package
+We can previous the new dataset for missing values with aggr from VIM package
 
 
 ```{r}
