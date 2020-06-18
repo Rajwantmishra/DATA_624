@@ -1,10 +1,10 @@
 ---
-title: "Chapter 3 Exercise 3.1"
+title: "Chapter 3 Exercise KJ3.1 and KJ3.2"
 author: "Group 3"
 date: "6/3/2020"
 output:
-  word_document: default
   pdf_document: default
+  word_document: default
   html_document: default
 ---
 
@@ -136,9 +136,9 @@ summary(powerTransform(Glass[,1:9], family="yjPower"))$result[,1:2]
 
  The suggested transformations are:
 
-No transformation for RI, Na, Si, and K since λ=1.
-Log transformations for Mg, K, Ba, and Fe since λ≈0.
-Square root transformation for Ca since λ=0.5.
+No transformation for RI, Na, Si, and K since lambda=1.
+Log transformations for Mg, K, Ba, and Fe since lambda =0.
+Square root transformation for Ca since lambda = 0.5.
 
 ## Exercise 3.2.
 
