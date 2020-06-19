@@ -2,9 +2,10 @@
 title: "Data 624 HW1"
 author: "Group 3: Alain Kuiete Tchoupou, Jeff Littlejohn, Samriti Malhotra, Rajwant Mishra, Jimmy Ng"
 date: "Due: 6/20/2020"
-output: 
-  html_document:
-    toc: true
+output: word_document
+always_allow_html: true
+  # html_document:
+  #   toc: true
 ---
 
 First, we load the requisite packages.  
