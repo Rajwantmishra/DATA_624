@@ -526,11 +526,12 @@ b. Compute a 95% prediction interval for the first forecast using $\hat{y}\pm1.9
 #### a. ses() function
 ```{r echo = TRUE, collapse = TRUE, fig.width = 8, fig.height = 10}
 # take a look of the ts object
+pigs <- read.csv("pigs.ts.csv") %>% ts()
 str(pigs)
 broom::glance(pigs %>% data.frame)
-pigs %>% forecast::autoplot()
+pigs %>% ts() %>% forecast::autoplot()
 # forecast for the next 4 months
-pigs_forecast4 <- forecast::ses(pigs, h = 4)
+pigs_forecast4 <- forecast::ses(ts(pigs), h = 4)
 # tidy forecast summary
 broom::tidy(pigs_forecast4 %>% summary)
 # visualize output
