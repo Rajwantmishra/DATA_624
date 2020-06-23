@@ -258,15 +258,23 @@ par(mfrow=c(1,2))
 acf(dt_s01_v7_xts)
 pacf(dt_s01_v7_xts)
 
+dt_s01_v7_xts %>% ggtsdisplay(main="")
+
+
 ```
 
-Since ACF plots very slowly moving towards ZERO for all the variables, we can say that our data series are non-stationary .
+Since ACF plots very slowly moving towards ZERO for all the variables, we can say that our data series are non-stationary.
 
 Let's use Differencing to make data stationary. We will use KPSS test to see if our null hypothesis is false.
 
 ```{r}
 library(urca)
 dt_s01_v1_xts %>% ur.kpss() %>% summary()
+
+# Fickey fuller test Before and after diff
+dt_s01_v1_xts %>% ur.df() %>% summary()
+
+
 
 ```
 
@@ -275,6 +283,9 @@ SO very cleary our data is not stationary , lets apply difference and see if we 
 ```{r}
 
 dt_s01_v1_xts %>% diff() %>% ur.kpss() %>% summary()
+dt_s01_v1_xts %>% diff() %>% .[!is.na(.)] %>% ur.df() %>% summary()
+dt_s01_v1_xts %>% diff() %>% .[!is.na(.)] %>% tseries::adf.test()
+
 
 cbind("Main Data S01_V1"= dt_s01_v1_xts,
       "Seasonlly Diff"= (diff(dt_s01_v1_xts,na.action = na.pass ))) %>% autoplot()
@@ -304,6 +315,9 @@ ndiffs(dt_s01_v5_xts)
 ndiffs(dt_s01_v7_xts)
 
 ```
+```{r}
+
+```
 
 
  # Lets use auto.arima to validate our model and fir it.
@@ -330,6 +344,9 @@ coef(aa_fit_dt_s01_v1)
 # ACF plot of residuals 
 checkresiduals(aa_fit_dt_s01_v1)
 acf(resid(aa_fit_dt_s01_v1))
+pacf(aa_fit_dt_s01_v1$residuals)
+
+Box.test(aa_fit_dt_s01_v1$residuals, lag=30,type = 'Ljung-Box')
 
 # ACF plot of the residuals are white noise, as no prominent patterns can be seen here. 
 # The Ljung-Box test also returned High p-vlaue indicating that we can't reject the null hypothessis, and data is  white nosie.
@@ -348,5 +365,168 @@ autoplot(aa_fit_dt_s01_v1)
 
 ```{r}
 Fore_dt_s01_v1
+```
+## Extra v01
+```{r}
+
+lambda1 <- BoxCox.lambda(diff(dt_s01_v1_xts))
+dt_s01_v1_xts_t <- BoxCox((dt_s01_v1_xts),lambda1)
+auto.arima(dt_s01_v1_xts_t,stepwise = F, approximation = F, d = 0)
+decompose(ts(dt_s01_v1_xts,frequency=365)) %>% autoplot()
+
+auto.arima(ts(dt_s01_v1_xts,frequency=365))
+auto.arima(ts(dt_s01_v1_xts))
+auto.arima(log(dt_s01_v1_xts))
+
+autoplot(ts(dt_s01_v1_xts,frequency=365), series="Data") +
+  autolayer(trendcycle(decompose(ts(dt_s01_v1_xts,frequency=365))), series="Trend") +
+  autolayer(seasadj(decompose(ts(dt_s01_v1_xts,frequency=365))), series="Seasonally Adjusted") +
+  xlab("Year") + ylab("Plastic Sale of Product A") +
+  ggtitle("Plastic Sale of Product A") +
+  scale_colour_manual(values=c("orange","blue","red"),
+             breaks=c("Data","Seasonally Adjusted","Trend"))
+```
+
+# Varaible 02
+
+```{r}
+
+
+ # Plot NA and Actaul Data for Var1 of Group S01
+  autoplot(as.ts(dt_s01_v2_xts) , series="V02") + 
+  autolayer(log(as.ts(dt_s01_v2_xts)),series="Data")+
+  scale_colour_manual(values=c("blue","red"),
+             breaks=c("V02","Data"))
+
+# ACF and PACF plot 
+dt_s01_v2_xts %>% ggtsdisplay(main="",lag.max = 365)
+dt_s01_v2_xts %>% ggtsdisplay(main="")
+# PACF plot suggest too much variations which are not close to zero, Let try doing some log tranfartion and check .Non zero autocorreations in the data from lag 1 to 35.
+# Acf plots shows that plots has some strong coreatlion in the frist few lags then it is very is of random walk model, but slowly it exibits Moderate Autocorrelation . 
+
+#https://www.statisticshowto.com/kpss-test/
+# The Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test figures out if a time series is stationary around a mean or linear trend, or is non-stationary due to a unit root. A stationary time series is one where statistical properties - like the mean and variance - are constant over time.
+
+# The null hypothesis for the test is that the data is stationary.
+# The alternate hypothesis for the test is that the data is not stationary.
+
+
+dt_s01_v2_xts %>% ur.kpss() %>% summary()
+# The null hypothesis for the test is that the data is stationary.
+# Here you should reject the null hypothesis of stationarity as the value of the test statistic is more extreme than the 10%, 5% and 1% critical values (13.4497 >  0.347 , 13.4497 > 0.463, 13.4497 > 0.739).
+# we will reject the null and accpet the alternate .
+
+dt_s01_v2_xts %>% diff() %>% ur.kpss() %>% summary()
+# Since as the value of the test statistic = 0.003 is less than than the 10%, 5% and 1% critical values (0.003 >  0.347 , 0.003 > 0.463, 0.003 > 0.739). We can say that data is now stationary.
+
+dt_s01_v2_xts %>% log() %>%diff() %>% ur.kpss() %>% summary()
+
+dt_s01_v2_xts %>%  .[!is.na(.)] %>% ur.df() %>% summary()
+dt_s01_v2_xts %>% log() %>%diff() %>%  .[!is.na(.)] %>% ur.df() %>% summary()
+
+
+# Plot 
+cbind("Main Data S01_V1"= log(dt_s01_v2_xts),
+      "Seasonlly Diff"= (diff(log(dt_s01_v2_xts),na.action = na.pass ))) %>% autoplot()
+
+cbind("Main Data S01_V2"= log(dt_s01_v2_xts))  %>% autoplot()
+cbind("Main Data S01_V2"= diff(log(dt_s01_v2_xts)))  %>% autoplot(series="ASA")
+
+autoplot((as.ts(log(dt_s01_v2_xts))) , series="Log Data") + 
+  autolayer(diff(as.ts(log(dt_s01_v2_xts))),series="Diff Log")+
+  scale_colour_manual(values=c("blue","red"),
+             breaks=c("Log Data","Diff Log"))
+
+#ACF Model 
+dt_s01_v2_xts %>% ggtsdisplay(main="")
+dt_s01_v2_xts %>% ggtsdisplay(main="",lag.max = 365)
+
+diff(log(dt_s01_v2_xts)) %>% ggtsdisplay(main="")
+
+diff(log(dt_s01_v2_xts),lag = 35) %>% ggtsdisplay(main="")
+
+# ACF plot suggest that after 3 lag data is moslty neagativily auto correalted to zero mean. This suggest we can apply 
+# Negative ACF means that a positive value return for one observation increases the probability of having a negative value return for another observation (depending on the lag) and vice-versa. Or you can say (for a stationary time series) if one observation is above the average the other one (depending on the lag) is below average and vice-versa. Have a look at "Interpreting a negative autocorrelation".
+# A negative autocorrelation changes the direction of the influence. A negative autocorrelation implies that if a particular value is above average the next value (or for that matter the previous value) is more likely to be below average. If a particular value is below average, the next value is likely to be above average.
+#http://www.pmean.com/09/NegativeAutocorrelation.html
+
+ #We will use ndiffs() to find rest of the number of differenes.
+
+ndiffs(dt_s01_v2_xts)
+ndiffs(log(dt_s01_v2_xts))
+
+## Lets use auto.arima to validate our model and fir it.
+aa_fit_dt_s01_v2 <- auto.arima(dt_s01_v2_xts,seasonal=TRUE)
+summary(aa_fit_dt_s01_v2)
+
+aa_fit_dt_s01_v2 <- auto.arima(log(dt_s01_v2_xts))
+summary(aa_fit_dt_s01_v2)
+
+# AIC Score of Log tranfomed model is better so we will use it.
+
+# ACF plot of residuals 
+checkresiduals(aa_fit_dt_s01_v2)
+checkresiduals(aa_fit_dt_s01_v2,lag = 35)
+# Ressiduals are giving very distrubuted erros and mostly close to zero.
+# Pvalue is greater than 5% and hence we can't reject null hypothessis i.e. autocorrelations up to lag 8 equal 
+
+fc<-forecast(aa_fit_dt_s01_v2,h=140) 
+
+fc$mean<-exp(fc$mean)
+fc$upper<-exp(fc$upper)
+fc$lower<-exp(fc$lower)
+fc$x<-exp(fc$x)
+
+fc %>% autoplot()
+fc
+```
+```{r}
+
+
+
+```
+
+# FOR var 1 (EXTRA )
+
+```{r}
+# FOR var 1 
+# Fickey fuller test Before and after diff
+dt_s01_v1_xts %>% ur.df() %>% summary()
+#https://stats.stackexchange.com/questions/24072/interpreting-rs-ur-df-dickey-fuller-unit-root-test-results
+# Given that the test statistic 1.5234  is within the all 3 regions (1%, 5%, 10%) where we fail to reject the null, we should presume the data is a random walk, ie that a unit root is present. In this case, the tau1 refers to the gamma = 0 hypothesis, The "z.lag1" is the gamma term, the coefficient for the lag term (y(t-1)), which is p=0.128, which we fail to reject as significant, simply implying that gamma isn't statistically significant to this model.
+
+dt_s01_v1_xts %>% ur.df(type = "drift") %>% summary()
+# (where a0 is "a sub-zero" and refers to the constant, or drift term) Here is where the output interpretation gets trickier. "tau2" is still the ??=0 null hypothesis. In this case, where the first test statistic = -0.2594 is within the region of failing to reject the null, we should again presume a unit root, that ??=0 i.e. z.lag.1.
+# The phi1 term refers to the second hypothesis, which is a combined null hypothesis of a0 = gamma = 0. This means that BOTH of the values are tested to be 0 at the same time. If p<0.05, we reject the null, and presume that AT LEAST one of these is false--i.e. one or both of the terms a0 or gamma are not 0. Failing to reject this null implies that BOTH a0 AND gamma = 0, implying 1) that gamma=0 therefore a unit root is present, AND 2) a0=0, so there is no drift term. Here we can say p is significant hence Drift is present with , so ao is not zero .
+
+dt_s01_v1_xts %>% diff() %>% .[!is.na(.)] %>% ur.df(type = "drift") %>% summary()
+# here we can say that no unit root is present .ie. Gama and Constant are not zero after differencing .
+
+
+
+
+```
+
+
+```{r}
+log(dt_s01_v2_xts) %>% ggtsdisplay(main="")
+dt_s01_v2_xts %>% ur.df() %>% summary()
+
+dt_s01_v2_xts%>% diff() %>% ggtsdisplay(main="")
+log(dt_s01_v2_xts)%>% diff() %>% ggtsdisplay(main="")
+
+auto.arima(dt_s01_v2_xts)
+auto.arima(log(dt_s01_v2_xts))
+
+
+
+autoplot(ts(dt_s01_v2_xts,frequency=365), series="Data") +
+  autolayer(trendcycle(decompose(ts(dt_s01_v2_xts,frequency=365))), series="Trend") +
+  autolayer(seasadj(decompose(ts(dt_s01_v2_xts,frequency=365))), series="Seasonally Adjusted") +
+  xlab("Year") + ylab("Plastic Sale of Product A") +
+  ggtitle("Plastic Sale of Product A") +
+  scale_colour_manual(values=c("orange","blue","red"),
+             breaks=c("Data","Seasonally Adjusted","Trend"))
+
 ```
 
