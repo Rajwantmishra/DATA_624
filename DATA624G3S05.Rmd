@@ -1,0 +1,245 @@
+---
+title: "Time Series S05"
+author: "Group 3"
+date: "6/23/2020"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Import the necessary libraries
+
+```{r}
+library(fpp2)
+library(dplyr)
+library(imputeTS)
+```
+
+### Load the dataset
+```{r}
+data_project <- readxl::read_excel("Data Set for Class.xls")
+head(data_project)
+```
+
+### Subset the dataset
+```{r}
+S05 <- subset(data_project, group == 'S05', select = c(SeriesInd, Var02, Var03))
+summary(S05)
+```
+
+#### Get the subsets Var02 and Var03
+
+```{r}
+var02 <- S05 %>% filter(SeriesInd <= 43021) %>% select(Var02)
+```
+
+```{r}
+var03 <- S05 %>% filter(SeriesInd <= 43021) %>% select(Var03)
+```
+
+Explore the subsets Var02
+```{r}
+summary(var02)
+```
+
+Var02 has 1 missing value
+
+Explore the subsets Var03
+```{r}
+summary(var03)
+```
+
+Var03 has 5 missing values
+Median and mean are in the same order.
+#### converse Var02 and Var03 to time series
+```{r}
+var02 <- ts(var02)
+str(var02)
+```
+
+```{r}
+var03 <- ts(var03)
+str(var03)
+```
+
+
+#### Imputing missing values
+```{r}
+var02 <- na_interpolation(var02)
+summary(var02)
+```
+
+```{r}
+var03 <- na_interpolation(var03)
+summary(var03)
+```
+
+### Visualization
+```{r}
+autoplot(var02) + ggtitle("Time Series S05-Var02")
+```
+Trend non seasonal time series
+
+
+```{r}
+autoplot(var03) + ggtitle("Time Series S05-Var03")
+```
+Trend  non seasonal time serie. It can also be cyclic time series
+
+#### The distribution of data
+```{r}
+par(mfrow= c(1,2))
+hist(var02)
+boxplot(var02)
+```
+
+Va02 is right skewed. It need to be centralised.
+
+```{r}
+par(mfrow= c(1,2))
+hist(var03)
+boxplot(var03)
+```
+Var03 is nearly normal distributed and has outliers at the left.
+
+ACF of Var02 difference
+```{r}
+par(mfrow=c(1,2))
+autoplot(diff(var02))
+ggAcf(diff(var02))
+```
+There is one order correlation
+
+
+ACF of Var03 difference
+```{r}
+par(mfrow=c(1,2))
+autoplot(diff(var03))
+ggAcf(diff(var03))
+```
+The ACF shows one order correlation
+
+
+#### Subset the train set
+```{r}
+train.var02 <- window(var02, end = as.integer(length(var02)*0.8))
+```
+
+
+```{r}
+train.var03 <- window(var03, end = as.integer(length(var03)*0.8))
+```
+
+#### Look for lambda transformation
+```{r}
+lambda2 <- BoxCox.lambda(var02)
+```
+
+```{r}
+lambda3 <- BoxCox.lambda(var03)
+```
+
+#### Apply the models to the train sets
+forecast horizon here the length  of test set
+```{r}
+h <- length(var02)- as.integer(length(var03)*0.8)
+```
+
+Get the arima model for Var02
+```{r}
+fvar02 <- train.var02 %>% auto.arima(lambda = lambda2, stepwise = FALSE) %>% forecast(h = h)
+```
+
+Get the arima model for Var03
+```{r}
+fvar03 <- train.var03 %>% auto.arima(lambda = lambda2, stepwise = FALSE) %>% forecast(h = h)
+```
+
+
+#### Naive model for Var02
+```{r}
+naive.var02 <- naive(train.var02, h=h)
+```
+
+#### Naive model for Var03
+```{r}
+naive.var03 <- naive(train.var03, h=h)
+```
+
+#### Accuracy compare to the naive model
+RMSE accuracy of Var02 arima model
+```{r}
+accuracy(fvar02, var02)["Test set", "RMSE"]
+```
+
+RMSE accuracy of Var02 naive model
+```{r}
+accuracy(naive.var02, var02)["Test set", "RMSE"]
+```
+
+Comparing the RMSEs, the arima model for Var02 is better than the naive model.
+
+RMSE accuracy for Var03 arima model
+```{r}
+accuracy(fvar03, var03)["Test set", "RMSE"]
+```
+
+RMSE accuracy for Var03 naive model
+```{r}
+accuracy(naive.var03, var03)["Test set", "RMSE"]
+```
+comparing with the RMSE, the naive method for Var03 is better than the arima of the same data. But the residuals of the naive method are not white noise. There still information to get from the naive residuals. We chose arima method instead.
+
+Ljung-Box test of the naive residuals
+```{r}
+Box.test(residuals(naive.var03))
+```
+
+
+
+### Forecast the time series
+```{r}
+farima.var02 <- var02 %>% auto.arima(lambda = lambda2, stepwise = FALSE) %>% forecast(h = 140)
+```
+
+```{r}
+farima.var03 <- var03 %>% auto.arima(lambda = lambda2, stepwise = FALSE) %>% forecast(h = 140)
+```
+
+##### Var02 forecast
+```{r}
+autoplot(farima.var02)
+```
+##### Var03 forecast
+```{r}
+autoplot(farima.var03)
+```
+
+#### Check the residuals if the model is valid
+##### Var02 residuals
+```{r}
+checkresiduals(farima.var02)
+```
+
+with p-value greater than 0.05, there is convaincing evidence that residuals for Var02 are white noise. On ACF, the residuals are uncorrelated. The histogram shows that the residuals are normal distributed.
+
+##### Var03 residuals
+```{r}
+checkresiduals(farima.var03)
+```
+
+with p-value greater than 0.05, there is convaincing evidence that residuals for Var03 are white noise. On ACF, the residuals are uncorrelated. The histogram shows that the residuals are normal distributed.
+
+
+
+
+
+
+
+
+
+
