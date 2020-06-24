@@ -66,16 +66,17 @@ summary(dt_s05)
 #### Get the subsets Var02 and Var03
 
 ```{r}
-dt_s05_v2 <- dt_s05 %>% filter(SeriesInd <= 43021) %>% select(Var02)
+dt_s05_v2 <- dt_s05 %>% filter(SeriesInd <= 43221) %>% select(Var02)
 ```
 
 ```{r}
-dt_s05_v3 <- dt_s05 %>% filter(SeriesInd <= 43021) %>% select(Var03)
+dt_s05_v3 <- dt_s05 %>% filter(SeriesInd <= 43221) %>% select(Var03)
 ```
 
 Explore the subsets Var02
 ```{r}
 summary(dt_s05_v2)
+str(dt_s05_v2)
 ```
 
 Var02 has 1 missing value
@@ -83,6 +84,7 @@ Var02 has 1 missing value
 Explore the subsets Var03
 ```{r}
 summary(dt_s05_v3)
+str(dt_s05_v3)
 ```
 Var03 has 5 missing values
 Median and mean are in the same order.
@@ -103,7 +105,7 @@ summary(dt_s05_v3)
 
 #### converse Var02 and Var03 to time series
 ```{r}
-dt_s05_v2 <- ts(dt_s05_v2, frequency = 1)
+dt_s05_v2 <- ts(dt_s05_v2)
 str(dt_s05_v2)
 ```
 
@@ -385,4 +387,18 @@ This is the metric MAPE on the entire dataset S05_V02 or S05_V03  using the ETS 
 print(paste0("MAPE for S05 Var02 is ", MLmetrics::MAPE(dt_s05_v2_fets_fit$fitted, dt_s05_v2)))
 print(paste0("MAPE for S05 Var03 is ", MLmetrics::MAPE(dt_s05_v3_fets_fit$fitted, dt_s05_v3)))
 ```
+
+
+```{r}
+
+# s05_v2_forecast <- window(dt_s05_v2_fets$fitted, start=1722-139)
+# library(xlsx)
+# write.xlsx(s05_v2_forecast, "c:\\DATA624\\S05_V02.xlsx")
+```
+
+```{r}
+# s05_v3_forecast <- window(dt_s05_v3_fets$fitted, start=1722-139)
+# write.xlsx(s05_v3_forecast, "c:\\DATA624\\S05_V03.xlsx")
+```
+
 
