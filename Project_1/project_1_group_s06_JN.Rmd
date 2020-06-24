@@ -15,7 +15,7 @@ First, we load a list of packages (such as tidyverse, fpp2) that are necessary f
 
 ```{r set_up, collapse = TRUE, warning = FALSE}
 # load packages
-packages <- c("tidyverse", "fpp2", "kableExtra", "broom")
+packages <- c("tidyverse", "fpp2", "kableExtra", "broom", "MLmetrics")
 pacman::p_load(char = packages)
 
 # read data, format date
@@ -93,7 +93,7 @@ plot(ts6_Var07_clean, col = "red", lty = "dashed", main = "Var07 clean data (out
 
 ## Model - ETS
 
-We decide to automate the process by relying on ETS model. We use the **forecast::ets** to look for the most appropriate forecasting model for each variable. In both cases, the ets recommends [A,N,N], i.e. simple exponential smoothing with additive errors. We fit the data and visualize the forecast with prediction interval (80, 95). In addition, we evaluate our models using **forecast::accuracy**. The MAPE is 1.13 and 1.14 for Var05 and Var07 respectively.
+We decide to automate the process by relying on ETS model. We use the **forecast::ets** to look for the most appropriate forecasting model for each variable. In both cases, the ets recommends [A,N,N], i.e. simple exponential smoothing with additive errors. We fit the data and visualize the forecast with prediction interval (80, 95). In addition, we evaluate our models using **forecast::accuracy**. The MAPE is 1.13% and 1.14% for Var05 and Var07 respectively.
 
 ```{r ETS, collapse = TRUE, warning = FALSE}
 # Var05
@@ -122,6 +122,10 @@ Var07_ets %>%
 ts6_evaluation <- lapply(list(Var05_ets, Var07_ets), function(x) forecast::accuracy(x) %>% tidy) 
 names(ts6_evaluation) <- c("Var05", "Var07")
 ts6_evaluation
+
+# MAPE
+print(paste0("MAPE for Var05 is ", MLmetrics::MAPE(Var05_ets$fitted, ts6_Var05_clean)))
+print(paste0("MAPE for Var07 is ", MLmetrics::MAPE(Var07_ets$fitted, ts6_Var07_clean)))
 ```
 
 ## Output 
