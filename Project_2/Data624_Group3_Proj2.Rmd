@@ -1,8 +1,10 @@
 ---
-title: "DAta 624 Group3 Project 2"
-author: "Jeff Littlejohn"
+title: "Data 624 Group3 Project 2"
+author: "Alain Kuiete Tchoupou, Jeff Littlejohn, Samriti Malhotra, Rajwant Mishra, Jimmy Ng"
 date: "7/5/2020"
-output: word_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
