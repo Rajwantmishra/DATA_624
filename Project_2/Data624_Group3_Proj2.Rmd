@@ -11,6 +11,7 @@ library(tidyverse)
 library(psych)
 library(DataExplorer)
 library(GGally)
+library(corrplot)
 ```
 
 ## Introduction
@@ -100,18 +101,12 @@ Perhaps the most conceptually difficult aspect of data exploration in predictive
 
 The correlations between variables in our training dataset are below.
 
-```{r,warning=FALSE}
-ggcorr(bev_train, label_size=3, nbreaks=5, geom = "text", hjst = 1)
-```
-
 ```{r}
-ggpairs(bev_train)
+cor_bev_train <- cor(bev_train[,-1], use = "na.or.complete")
+corrplot(cor_bev_train, order = 'hclust', type = 'lower')
 ```
 
-
-```{r}
-corrplot(bev_train)
-```
+With so many dimensions (variables) in the training data, seeing individual correlations between variables is difficult here. Suffice to say, we have high correlation between certain variables that would negatively affect our predictive model if we use certain approaches.
 
 
 ### Data Processing
