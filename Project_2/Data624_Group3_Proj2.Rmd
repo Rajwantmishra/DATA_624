@@ -12,6 +12,10 @@ library(psych)
 library(DataExplorer)
 library(GGally)
 library(corrplot)
+library(DMwR)
+
+#Please add any new required packages here:
+
 ```
 
 ## Introduction
@@ -47,9 +51,10 @@ summary(cars)
 
 ```{r}
 bev_train <- readxl::read_excel('StudentData_TO_MODEL.xlsx',col_names = TRUE, sheet = 'Subset')
-bev_test <- readxl::read_excel('StudentEvaluation_TO_PREDICT.xlsx',col_names = TRUE, sheet = 'Subset (2)')
+bev_score <- readxl::read_excel('StudentEvaluation_TO_PREDICT.xlsx',col_names = TRUE, sheet = 'Subset (2)')
 ```
 
+For this predictive model project, we've been provided two data sets - a training data set we will use to build the predictive models and an evaluation data set which will be used to predict unknown pH values and be scored to assess our model performance. Note that this is different from what you may have heard referred to as a train-test split. We use the training "TO MODEL" dataset to both train and test our models before using the best model to predict unknown pH scores for the submission dataset.
 
 ```{r}
 str(bev_train)
@@ -57,10 +62,10 @@ str(bev_train)
 
 We have 33 data elements for 2571 records that will be used for training. We expect some missing or NULL values - here we see them reflected in the "NA" values in the "Hyd Pressure 2" measurements.
 
-Here, we verify that our test data contains the same elements.
+Here, we verify that our scoring data contains the same elements.
 
 ```{r}
-dim(bev_test)
+dim(bev_score)
 ```
 
 As mentioned above, we will generate the model on using the training data set that covers 2571 rows and then evaluate its accuracy - and other metrics - using the 267-record test data set.
@@ -111,9 +116,38 @@ With so many dimensions (variables) in the training data, seeing individual corr
 
 ### Data Processing
 
-```{r}
+Before we get to modeling, we will do a little data processing - also known as cleansing. First, we will remove the handful of records (0.16%, as we saw before) from the training set that have missing pH values. This will remove four records. Next, we will label the small number of records that have missing Brand categories as "U" for unknown.
 
+```{r}
+#remove NA pH records
+bev_train <- bev_train[complete.cases(bev_train[,26]),]
+#update NA Brand Code records to "U"
+bev_train$`Brand Code`[is.na(bev_train$`Brand Code`)] <- 'U'
 ```
+
+Finally we will impute missing values for the training records that remain. There are a number of advanced methods used by data scientists to impute or "fill in" missing/NA values. Based on past experience and the fact that we don't have "big data," we will use k-neaest neighbor (KNN) imputation, which uses a distance function to essentially predict values for missing data elements based on other records that are similar to in it for the elements that are present. Simply, if everyone on your street has two cars, we'll guess that you do two.
+
+```{r}
+bev_train_i <- as.data.frame(bev_train[, !names(bev_train) %in% c("Brand Code", "PH")])
+```
+
+```{r}
+#https://www.r-bloggers.com/missing-value-treatment/
+bev_train_impute <- knnImputation(bev_train_i, k = 10)
+bev_train_impute$pH <- bev_train$PH
+bev_train_impute$'Brand Code' <- bev_train$`Brand Code`
+```
+
+
+As mentioned earlier, data processing frequently includes such steps as performing a train-test split, transforming variables so that they're all on normalized scales, and removing variables that have correlation with others - or have no correlation with the dependent variables, pH in this case. As different modeling approaches handle these data issues in disparate ways, we will handle those data transformations and processing steps in the indivdual sections of model construction.
+
+## Linear Regression - Rajwant
+
+## Nonlinear Regression - Jimmy
+
+## Regression Trees and Rule-Based Models - Alain
+
+## Conclusion
 
 ## References
 
@@ -121,4 +155,8 @@ https://readxl.tidyverse.org/
 
 https://www.rdocumentation.org/packages/DataExplorer/versions/0.8.1/topics/plot_missing
 
-https://datascience.stackexchange.com/questions/24452/in-supervised-learning-why-is-it-bad-to-have-correlated-features#:~:text=The%20stronger%20the%20correlation%2C%20the,tend%20to%20change%20in%20unison.
+https://datascience.stackexchange.com/questions/24452/in-supervised-learning-why-is-it-bad-to-have-correlated-features#:~:text=The%20stronger%20the%20correlation%2C%20the,tend%20to%20change%20in%20unison
+
+https://medium.com/coinmonks/dealing-with-missing-data-using-r-3ae428da2d17
+
+https://www.r-bloggers.com/missing-value-treatment/
