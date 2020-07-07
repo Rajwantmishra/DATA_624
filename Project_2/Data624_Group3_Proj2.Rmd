@@ -145,9 +145,9 @@ As mentioned earlier, data processing frequently includes such steps as performi
 
 ## Nonlinear Regression - Jimmy
 
-## Regression Trees and Rule-Based Models - Alain
+## Regression Trees and Rule-Based Models - Samriti
 
-## Conclusion
+## Conclusion - Alain
 
 ## References
 
