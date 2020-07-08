@@ -15,6 +15,7 @@ library(DataExplorer)
 library(GGally)
 library(corrplot)
 library(DMwR)
+library(caret)
 
 #Please add any new required packages here:
 
@@ -52,14 +53,14 @@ summary(cars)
 ### Data Loading
 
 ```{r}
-bev_train <- readxl::read_excel('StudentData_TO_MODEL.xlsx',col_names = TRUE, sheet = 'Subset')
+bev_model <- readxl::read_excel('StudentData_TO_MODEL.xlsx',col_names = TRUE, sheet = 'Subset')
 bev_score <- readxl::read_excel('StudentEvaluation_TO_PREDICT.xlsx',col_names = TRUE, sheet = 'Subset (2)')
 ```
 
-For this predictive model project, we've been provided two data sets - a training data set we will use to build the predictive models and an evaluation data set which will be used to predict unknown pH values and be scored to assess our model performance. Note that this is different from what you may have heard referred to as a train-test split. We use the training "TO MODEL" dataset to both train and test our models before using the best model to predict unknown pH scores for the submission dataset.
+For this predictive model project, we've been provided two data sets - a modeling data set we will use to train and test the predictive models and an evaluation data set which will be used to predict unknown pH values and be scored to assess our model performance.
 
 ```{r}
-str(bev_train)
+str(bev_model)
 ```
 
 We have 33 data elements for 2571 records that will be used for training. We expect some missing or NULL values - here we see them reflected in the "NA" values in the "Hyd Pressure 2" measurements.
@@ -76,14 +77,14 @@ As mentioned above, we will generate the model on using the training data set th
 
 Next, we explore our data using summary statistics.
 
-```{r}
-describe(bev_train)
+```{r,warning=FALSE}
+describe(bev_model)
 ```
 
 Brand Code is a string (non-numeric) field, so its lack of a mean makes sense. We see a wide range of values. Some may be on different scales. Despite being mostly numeric fields, some of these might use temperatures in Celsius, whereas others like Carb[onation] Pressure use pounds per square inch. In order to build the most effective predictive model, we may apply data transformations to standardize these numeric data elements.
 
 ```{r}
-plot_histogram(bev_train, ggtheme=theme_light())
+plot_histogram(bev_model, ggtheme=theme_light())
 ```
 
 Note that the scales of the x-axes vary for each element. Nonetheless, we see data elements with normal distributions and many with likely outliers. Some histograms reveal bimodal or even trimodal distributions.
@@ -91,7 +92,7 @@ Note that the scales of the x-axes vary for each element. Nonetheless, we see da
 Here, we take a closer look at the pH values present in our training data.
 
 ```{r,warning=FALSE}
-ggplot(bev_train, aes(PH)) + geom_histogram(bins=20) + theme_classic()
+ggplot(bev_model, aes(PH)) + geom_histogram(bins=20) + theme_classic()
 ```
 
 A slight left skew is evident, as is a right potential outlier.
@@ -99,7 +100,7 @@ A slight left skew is evident, as is a right potential outlier.
 Finally, a count of missing (NA) values by variable is conducted.
 
 ```{r}
-plot_missing(bev_train, title = "Beverage Training Data: % Missing Values by Data Element")
+plot_missing(bev_model, title = "Beverage Training Data: % Missing Values by Data Element")
 ```
 
 MFR is missing for more than eight percent of our training records, and Brand Code is NA for almost five percent of them. Those will need to be handled in our next section.
@@ -109,8 +110,8 @@ Perhaps the most conceptually difficult aspect of data exploration in predictive
 The correlations between variables in our training dataset are below.
 
 ```{r}
-cor_bev_train <- cor(bev_train[,-1], use = "na.or.complete")
-corrplot(cor_bev_train, order = 'hclust', type = 'lower')
+cor_bev_model <- cor(bev_model[,-1], use = "na.or.complete")
+corrplot(cor_bev_model, order = 'hclust', type = 'lower')
 ```
 
 With so many dimensions (variables) in the training data, seeing individual correlations between variables is difficult here. Suffice to say, we have high correlation between certain variables that would negatively affect our predictive model if we use certain approaches.
@@ -122,22 +123,33 @@ Before we get to modeling, we will do a little data processing - also known as c
 
 ```{r}
 #remove NA pH records
-bev_train <- bev_train[complete.cases(bev_train[,26]),]
+bev_model <- bev_model[complete.cases(bev_model[,26]),]
 #update NA Brand Code records to "U"
-bev_train$`Brand Code`[is.na(bev_train$`Brand Code`)] <- 'U'
+bev_model$`Brand Code`[is.na(bev_model$`Brand Code`)] <- 'U'
 ```
 
 Finally we will impute missing values for the training records that remain. There are a number of advanced methods used by data scientists to impute or "fill in" missing/NA values. Based on past experience and the fact that we don't have "big data," we will use k-neaest neighbor (KNN) imputation, which uses a distance function to essentially predict values for missing data elements based on other records that are similar to in it for the elements that are present. Simply, if everyone on your street has two cars, we'll guess that you do two.
 
 ```{r}
-bev_train_i <- as.data.frame(bev_train[, !names(bev_train) %in% c("Brand Code", "PH")])
+bev_model_i <- as.data.frame(bev_model[, !names(bev_model) %in% c("Brand Code", "PH")])
 ```
 
 ```{r}
 #https://www.r-bloggers.com/missing-value-treatment/
-bev_train_impute <- knnImputation(bev_train_i, k = 10)
-bev_train_impute$pH <- bev_train$PH
-bev_train_impute$'Brand Code' <- bev_train$`Brand Code`
+bev_model_impute <- knnImputation(bev_model_i, k = 10)
+bev_model_impute$pH <- bev_model$PH
+bev_model_impute$'Brand Code' <- bev_model$`Brand Code`
+```
+
+Before getting to modelling, we will split our modelling set into train and test sets.
+
+```{r}
+set.seed(3456)
+trainIndex <- createDataPartition(bev_model_impute$pH, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+bev_model_train <- bev_model_impute[ trainIndex,]
+bev_model_test  <- bev_model_impute[-trainIndex,]
 ```
 
 
