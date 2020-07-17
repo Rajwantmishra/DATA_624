@@ -549,29 +549,36 @@ Exterme is built on the principles of gradient boosting framework and designed t
 Random forest tree-based model
 ```{r}
 
+model <- readxl::read_excel('StudentData_TO_MODEL.xlsx',col_names = TRUE, sheet = 'Subset')
+score <- readxl::read_excel('StudentEvaluation_TO_PREDICT.xlsx',col_names = TRUE, sheet = 'Subset (2)')
+
 set.seed(3456)
 
-setDT(bev_model)
-setDT(bev_score)
+setDT(model)
+setDT(score)
+
 
 
 # dependent variable 
-trainY <- bev_model$PH
+trainY <- model$PH
+
+
 
 # Data processing
-trainDummy <- dummyVars(PH ~ ., data = bev_model, fullRank = TRUE)
-trainX <- as.data.table(predict(trainDummy, newdata = bev_model))
-predX <- as.data.table(predict(trainDummy, newdata = bev_score))
+trainDummy <- dummyVars(PH ~ ., data = model, fullRank = TRUE)
+trainX <- as.data.table(predict(trainDummy, newdata = model))
+predX <- as.data.table(predict(trainDummy, newdata = score))
 
 
 # Find missing values
-missingDat <- bev_model[, lapply(.SD, function(x) sum(is.na(x)))]
-missingTgt <- missDat$PH
+missingDat <- model[, lapply(.SD, function(x) sum(is.na(x)))]
+missingTgt <- missingDat$PH
 missingTgtLoc <- which(is.na(trainY))
 
 # Remove the missing values from the training and test sets
 trainX <- trainX[-missingTgtLoc, ]
 trainY <- trainY[-missingTgtLoc]
+
 
 tSplits <- createDataPartition(trainY, p = 0.75)
 X_Train <- trainX[tSplits$Resample1, ]
@@ -599,6 +606,7 @@ rfmodel <- train(x = X_Train, y = Y_Train, method = 'ranger',
 
 pred_RF <-  predict(rfmodel, newdata = X_test) 
 
+write.csv(pred_RF, file = "RF_prediction_for_PH.csv", row.names = FALSE)
 
 stopCluster(no_cluster)
 
@@ -632,7 +640,9 @@ data.frame("Extreme Gradient Boosting"= defaultSummary(data.frame(obs=Y_test,pre
 
 data.frame("Random Forest"= defaultSummary(data.frame(obs=Y_test,pred=predict(rfmodel, X_test))),"MAPE" =  MLmetrics::MAPE(predict(rfmodel, X_test),Y_test))
 ```
-The performance of these models are very similar, but Random forest seems to do slightly better than Extreme Gradient Boosting. We can apply the model to the evaluation set. 
+The performance of these models are very similar, but Random forest seems to do slightly better than Extreme Gradient Boosting. 
+
+
 
  
 ## Conclusion - Alain
